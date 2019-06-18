@@ -2,22 +2,12 @@ import express from 'express'
 import { Client } from 'pg'
 import bcrypt, { hash } from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
-import { table, client } from '../api/api'
+import { table, client } from '../index'
 import { check_auth } from '../middleware/check-auth'
 import cors from 'cors'
 
 export const router = express.Router()
-// const client = new Client()
-// const table = client.connect()
 
-// router.use(function (req, res, next) {
-//     // security 
-//     //https://enable-cors.org/server_expressjs.html
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     res.header("Access-Control-Allow-Methods", "*");
-//     next();
-// });
 router.use(cors({
     credentials: true
 

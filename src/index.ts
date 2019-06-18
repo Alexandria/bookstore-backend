@@ -1,10 +1,10 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import * as jwt from 'jsonwebtoken'
-import { router } from '../auth'
-import { check_auth } from '../middleware/check-auth'
+import { router } from './auth'
+import { check_auth } from './middleware/check-auth'
 //https://node-postgres.com/
-import { Client } from 'pg'
+import { Client, ConnectionConfig } from 'pg'
 import { verify } from 'crypto';
 import { request } from 'http';
 import { ErrorInfo } from 'react';
@@ -19,7 +19,17 @@ const PORT = process.env.PORT
 export const app = express()
 
 type Row = { book_id: number, title: string, author: string }
-export const client = new Client()
+
+const config: ConnectionConfig = {
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: Number(process.env.PGPORT),
+}
+
+
+export const client = new Client(config)
 export const table = client.connect()
 
 //my Routers
