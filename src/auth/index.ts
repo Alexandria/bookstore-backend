@@ -1,9 +1,7 @@
 import express from 'express'
-import { Client } from 'pg'
 import bcrypt, { hash } from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import { table, client } from '../index'
-import { check_auth } from '../middleware/check-auth'
 import cors from 'cors'
 
 export const router = express.Router()
