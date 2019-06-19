@@ -3,9 +3,9 @@ import { sequelize } from '../sequelize'
 
 
 export class Users extends Model {
-    book_id!: number
-    title!: string
-    author!: string
+    user_id!: number
+    email!: string
+    password!: string
 
     createdAt!: Date
     updatedAt!: Date

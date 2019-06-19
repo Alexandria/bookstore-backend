@@ -9,11 +9,12 @@ export const check_auth = (req: express.Request, res: express.Response, next: ex
         const decoded = jwt.verify(token, "secret")
         console.log('decoded: ', decoded)
         next()
-
     } catch (error) {
         res.status(401).json({
-            message: 'Authorization Faild ⛔️ at token'
+            message: 'You must be logged in to complete this action'
         })
+
     }
+
 
 }
