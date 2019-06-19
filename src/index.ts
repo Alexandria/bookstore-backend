@@ -48,6 +48,16 @@ app.get('/', (req, res) => {
             console.log(err)
         })
 })
+
+app.get('/users', (req, res) => {
+    User.findAll()
+        .then((result) => {
+            res.status(200).json(result)
+        }).catch(err => {
+            console.log(err)
+        })
+})
+
 app.get('/edit/:id', (req, res) => {
     Book.findAll({
         where: {
@@ -61,7 +71,7 @@ app.get('/edit/:id', (req, res) => {
 })
 
 
-app.post('/checkin', (req, res) => {
+app.post('/checkin', check_auth, (req, res) => {
     Book.create({
         title: req.body.title,
         author: req.body.author
@@ -105,3 +115,18 @@ sequelize.sync()
     }).catch((err: string) => {
         console.log('Sync', err)
     })
+
+
+//error handler
+app.use(function (err: Error
+    , req: express.Request, res: express.Response
+    , next: express.NextFunction) {
+
+    res.json({
+        message: err.message,
+        error: req.app.get('env') === 'development' ? err : {}
+    })
+
+
+})
+

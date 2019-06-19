@@ -3,6 +3,8 @@ import bcrypt, { hash } from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
 import { table, client } from '../index'
 import cors from 'cors'
+import { User } from '../database/models/user'
+import { validUser } from '../utils/validUser'
 
 export const router = express.Router()
 
@@ -14,7 +16,6 @@ router.use(cors({
 router.use(express.json())
 
 router.get('/', (req, res) => {
-    console.log(req.headers['authorization'])
     res.json({
         message: '🗝'
     })
@@ -25,63 +26,45 @@ router.get('/', (req, res) => {
 // Users cannot login to the app with a blank or missing email
 // Users cannot login to the app with a blank or incorrect password
 
-function validUser(user: { email: string, password: string }) {
-    if (user) {
-        const validEmail = user.email && user.email.trim() != ''
-        const validPassword = user.password && user.password.trim() != ''
-
-        console.log(`User: ${user}. validEmail: ${user.email}, validPass: ${user.password}`)
-        return validEmail && validPassword
-    }
-    return false
-}
-
-router.post('/login', async function (req, res, next) {
+router.post('/login', (req, res) => {
     if (validUser(req.body)) {
-        //Verify that the email address is valid
-        await table
-        const sql = 'select * from users where email = $1'
-        const params = [req.body.email]
+        User.findAll({
+            where: {
+                email: req.body.email
+            }
+        }).then(result => {
+            if (result.length != 0) {
+                bcrypt.compare(req.body.password, result[0].password)
+                    .then(isPassword => {
+                        if (isPassword) {
+                            const token = jwt.sign({
+                                email: result[0].email,
+                                userId: result[0].user_id
+                            }, 'secret',
+                                {
+                                    expiresIn: '30s'
+                                }
+                            )
 
-        const result = await client.query(sql, params)
-        console.log("Result", result.rows[0])
-        const { rows } = result
-        console.log(result)
-        if (rows[0]) {
-            //if email is valid hash the incomming password the user entered
-            //Use the compare function from bcrupt to compare user entered pw with one in the data base
-            const isPasswordMatch = await bcrypt.compare(req.body.password, rows[0].password)
-            // setting JWT
-            if (isPasswordMatch) {
-                // set token!
-                const token = jwt.sign({
-                    email: rows[0].email,
-                    userId: rows[0].user_id
-                }, 'secret',
-                    {
-                        expiresIn: '30s'
-                    }
-                )
+                            res.json({
+                                token,
+                                message: 'logged in 🔓'
+                            })
 
-                res.json({
-                    token,
-                    message: 'logged in 🔓'
-                })
 
+                        } else {
+                            //failed to log in
+                            res.status(401).json({
+                                message: 'Invalid Login'
+                            })
+                        }
+                    }).catch(err => console.log(err))
             } else {
                 res.status(401).json({
-                    message: 'Authorization Faild ⛔️'
+                    message: 'Invalid Login'
                 })
             }
-
-
-        } else {
-            res.status(401).json({
-                message: 'Authorization Faild ⛔️'
-            })
-        }
-
-        //set a cookie
+        })
     } else {
         res.status(401).json({
             message: 'Authorization Faild ⛔️'
@@ -90,37 +73,38 @@ router.post('/login', async function (req, res, next) {
 })
 
 router.post('/signup', (req, res, next) => {
-    console.log(`Request Body: ${req.body}`)
     if (validUser(req.body)) {
-        table
-            .then(() => {
-                const sql = 'select * from users where email = $1'
-                const params = [req.body.email]
-                return client.query(sql, params)
-            }).then(result => {
-                if (result.rows.length <= 0) {
-                    //hash the password
-                    bcrypt.hash(req.body.password, 10)
-                        .then(hash => {
-                            const sql = 'insert into users(email, password)values($1,$2)'
-                            const params = [req.body.email, hash]
-                            return client.query(sql, params)
+        User.findAll({
+            where: {
+                email: req.body.email
+            }
+        }).then((result) => {
+            if (result.length == 0) {
+                console.log('Hashing password .....')
+                bcrypt.hash(req.body.password, 10)
+                    .then(hash => {
+                        User.create({
+                            email: req.body.email,
+                            password: hash
+                        }).then(() => {
+                            res.json({
+                                message: '✅ User was created!'
+                            })
                         }).catch(errors => console.log(errors))
-                    res.json({
-                        message: '✅'
                     })
-                } else {
-                    // else, This email is already taken
-                    res.json({
-                        message: 'Email is already registered'
-                    })
-                }
-            }).catch(error => {
-                console.log(error)
-            })
-        console.log(`Req body: ${req.body}`)
+            } else {
+                console.log('Result is is truthy ', result)
+                res.status(401).json({
+                    message: 'Email  is already in use.'
+                })
+            }
+        }).catch(err => console.log(err))
 
     } else {
-        next(new Error('Invalid Information Provided'))
+        res.status(401).json({
+            message: 'Authorization Faild: Invalid information ⛔️'
+        })
     }
+
 })
+
