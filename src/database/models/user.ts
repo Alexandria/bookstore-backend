@@ -1,23 +1,22 @@
-import { DataTypes, Model } from 'sequelize'
-import { sequelize } from '../sequelize'
+import {
+    Model,
+    DataTypes
+} from 'sequelize';
+import { sequelize } from './index'
 
 
-export class Users extends Model {
-    user_id!: number
-    email!: string
-    password!: string
+export interface UserAttributes extends Model {
+    user_id?: number
+    email: string
+    password: string
 
-    createdAt!: Date
-    updatedAt!: Date
+    createdAt?: Date
+    updatedAt?: Date
 }
 
-// Need to declare the static model so `findOne` etc. use correct types.
-//http://docs.sequelizejs.com/manual/typescript
-type UserModel = typeof Model & {
-    new(): Users;
+export type UserModel = typeof Model & {
+    new(): UserAttributes
 }
-
-
 
 export const User = <UserModel>sequelize.define('user', {
     user_id: {
@@ -36,4 +35,5 @@ export const User = <UserModel>sequelize.define('user', {
         allowNull: false
     }
 })
+
 
