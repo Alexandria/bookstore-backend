@@ -1,10 +1,10 @@
 import express from 'express'
 import bcrypt, { hash } from 'bcrypt'
 import * as jwt from 'jsonwebtoken'
-import { table, client } from '../index'
 import cors from 'cors'
 import { User } from '../database/models/user'
 import { validUser } from '../utils/validUser'
+
 
 export const router = express.Router()
 
@@ -98,7 +98,11 @@ router.post('/signup', (req, res, next) => {
                     message: 'Email  is already in use.'
                 })
             }
-        }).catch(err => console.log(err))
+        }).catch(err => {
+            res.status(401).json({
+                message: err.message
+            })
+        })
 
     } else {
         res.status(401).json({

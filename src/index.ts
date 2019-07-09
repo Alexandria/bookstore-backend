@@ -1,13 +1,10 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import * as jwt from 'jsonwebtoken'
 import { router } from './auth'
-import { check_auth } from './middleware/check-auth'
+import { verifyToken } from './middleware/verifyToken'
 import { Client, ConnectionConfig } from 'pg'
 import cors from 'cors'
-import { verifyToken } from './utils/verifyToken'
-import { sequelize } from '../src/database/sequelize'
-import { User } from '../src/database/models/user'
+import { User } from './database/models/user'
 import { Book } from './database/models/book'
 // reads the contents of .env and merges that with the pre exsiting environment varibles
 dotenv.config()
@@ -18,6 +15,7 @@ export const app = express()
 
 
 type Row = { book_id: number, title: string, author: string }
+
 
 
 const config: ConnectionConfig = {
@@ -33,6 +31,11 @@ export const client = new Client(config)
 export const table = client.connect()
 
 app.use('/auth', router)
+
+app.listen(PORT, () => {
+    console.log(`listening on port ${PORT}`)
+
+})
 
 app.use(cors({
     credentials: true
@@ -71,7 +74,7 @@ app.get('/edit/:id', (req, res) => {
 })
 
 
-app.post('/checkin', check_auth, (req, res) => {
+app.post('/checkin', verifyToken, (req, res) => {
     Book.create({
         title: req.body.title,
         author: req.body.author
@@ -106,15 +109,15 @@ app.put('/edit/:id', (req, res) => {
         .then(() => res.sendStatus(200))
 })
 
-sequelize.sync()
-    .then((result: any) => {
-        app.listen(PORT, () => {
-            console.log(`listening on port ${PORT}`)
+// sequelize.sync()
+//     .then((result: any) => {
+//         app.listen(PORT, () => {
+//             console.log(`listening on port ${PORT}`)
 
-        })
-    }).catch((err: string) => {
-        console.log('Sync', err)
-    })
+//         })
+//     }).catch((err: string) => {
+//         console.log('Sync', err)
+//     })
 
 
 //error handler
